@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  mongodb:
+    image: mongo:6
+    container_name: virtual-outfit-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    build:
+      context: ./backend
+    container_name: virtual-outfit-backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/virtual-outfit
+
+  ai:
+    build:
+      context: ./ai-service
+    container_name: virtual-outfit-ai
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: virtual-outfit-frontend
+    ports:
+      - "5173:5173"
+
+volumes:
+  mongo-data:
