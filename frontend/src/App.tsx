@@ -4,6 +4,7 @@ import ARScene from "./components/ARScene";
 import { usePose } from "./hooks/usePose";
 import { useSegmentation } from "./hooks/useSegmentation";
 
+
 const App: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const maskCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -12,31 +13,32 @@ const App: React.FC = () => {
   useSegmentation(videoRef, maskCanvasRef);
 
   return (
-    <div style={{ position: "relative" }}>
+  <div style={{ display: "flex" }}>
+    
+    {/* LEFT SIDE CAMERA */}
+    <div
+      style={{
+        position: "relative",
+        width: 640,
+        height: 480,
+      }}
+    >
       <CameraFeed videoRef={videoRef} />
 
-      <canvas
-        ref={maskCanvasRef}
-        width={640}
-        height={480}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          opacity: 0.3,
-        }}
+      <ARScene
+        pose={poseData}
+        textureUrl="/assets/blue-shirt.png"
+        videoWidth={640}
+        videoHeight={480}
       />
-
-      {poseData && (
-        <ARScene
-          pose={poseData}
-          textureUrl="/assets/red-shirt.png"
-          videoWidth={640}
-          videoHeight={480}
-        />
-      )}
     </div>
-  );
-};
+
+    {/* RIGHT SIDE GARMENTS */}
+    <div style={{ marginLeft: 40 }}>
+      <GarmentsList />
+    </div>
+
+  </div>
+);
 
 export default App;
