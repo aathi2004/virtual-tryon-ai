@@ -4,12 +4,17 @@
     "@mediapipe/drawing_utils": "^0.3.1675466124",
     "@mediapipe/pose": "^0.5.1675469404",
     "@mediapipe/selfie_segmentation": "^0.1.1675465747",
+    "@react-three/cannon": "^6.6.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
+    "cannon-es": "^0.20.0",
     "three": "^0.183.2"
   },
   "devDependencies": {
     "@types/node": "^25.3.1",
-    "@types/three": "^0.183.1"
+    "@types/three": "^0.183.1",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.1"
   }
 }

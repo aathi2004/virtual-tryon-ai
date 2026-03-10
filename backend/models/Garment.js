@@ -1,9 +1,10 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const garmentSchema = new mongoose.Schema({
   name: String,
-  imageUrl: String,
-  category: String
+  category: String,
+  gender: String,
+  image: String,
 });
 
-module.exports = mongoose.model("Garment", garmentSchema);
+export default mongoose.model("Garment", garmentSchema);

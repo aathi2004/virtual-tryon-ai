@@ -1,5 +1,5 @@
-import React, { useMemo, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import React, { useEffect, useRef } from "react";
+import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 
 interface PosePoint {
@@ -10,147 +10,77 @@ interface PosePoint {
 interface PoseData {
   left_shoulder: PosePoint;
   right_shoulder: PosePoint;
-  left_hip: PosePoint;
-  right_hip: PosePoint;
 }
 
-interface SceneProps {
+interface Props {
   pose: PoseData | null;
-  textureUrl: string;
   videoWidth: number;
   videoHeight: number;
 }
 
-const SMOOTHING = 0.25;
+function GarmentMesh({ pose }: { pose: PoseData }) {
+  const meshRef = useRef<THREE.Mesh>(null!);
 
-const ShirtMesh: React.FC<SceneProps> = ({
-  pose,
-  textureUrl,
-  videoWidth,
-  videoHeight,
-}) => {
-  const meshRef = useRef<THREE.Mesh>(null);
+  useEffect(() => {
+    if (!pose || !meshRef.current) return;
 
-  const prev = useRef({
-    x: 0,
-    y: 0,
-    scale: 1,
-    angle: 0,
-  });
+    const { left_shoulder, right_shoulder } = pose;
 
-  const texture = useMemo(() => {
-    const loader = new THREE.TextureLoader();
-    return loader.load(textureUrl);
-  }, [textureUrl]);
+    // 🧠 User shoulder width (pixels)
+    const userShoulderWidth = Math.abs(
+      right_shoulder.x - left_shoulder.x
+    );
 
-  if (!pose) return null;
+    // 👕 Shoulder width of 3D model (tweak once)
+    const modelShoulderWidth = 180;
 
-  const { left_shoulder, right_shoulder, left_hip, right_hip } = pose;
+    // 📏 Auto scale
+    const scaleFactor = userShoulderWidth / modelShoulderWidth;
 
-  const shoulderWidth =
-    Math.abs(right_shoulder.x - left_shoulder.x);
+    meshRef.current.scale.set(
+      scaleFactor,
+      scaleFactor,
+      scaleFactor
+    );
 
-  const hipWidth =
-    Math.abs(right_hip.x - left_hip.x);
+    // 🎯 Position center on shoulders
+    const centerX =
+      (left_shoulder.x + right_shoulder.x) / 2;
+    const centerY =
+      (left_shoulder.y + right_shoulder.y) / 2;
 
-  const torsoDepth =
-    shoulderWidth * 0.6 + hipWidth * 0.4;
+    meshRef.current.position.set(
+      (centerX - 320) / 100,
+      -(centerY - 240) / 100,
+      0
+    );
 
-  const shoulderCenterX =
-    (left_shoulder.x + right_shoulder.x) / 2;
+    // 🔄 Rotation by shoulder slope
+    const angleRad = Math.atan2(
+      right_shoulder.y - left_shoulder.y,
+      right_shoulder.x - left_shoulder.x
+    );
 
-  const shoulderCenterY =
-    (left_shoulder.y + right_shoulder.y) / 2;
+    meshRef.current.rotation.z = -angleRad;
 
-  const hipCenterY =
-    (left_hip.y + right_hip.y) / 2;
-
-  const torsoHeight =
-    Math.abs(hipCenterY - shoulderCenterY);
-
-  const centerX = shoulderCenterX;
-  const centerY = shoulderCenterY + torsoHeight * 0.35;
-
-  const angleRad = Math.atan2(
-    right_shoulder.y - left_shoulder.y,
-    right_shoulder.x - left_shoulder.x
-  );
-
-  const normalizedX =
-    (centerX / videoWidth - 0.5) * 6;
-
-  const normalizedY =
-    -(centerY / videoHeight - 0.5) * 4;
-
-  const depthScale =
-    (torsoDepth / videoWidth) * 5;
-
-  const zOffset =
-    -torsoDepth / videoWidth;
-
-  const smooth = (prevVal: number, curVal: number) =>
-    prevVal * (1 - SMOOTHING) + curVal * SMOOTHING;
-
-  const smoothed = {
-    x: smooth(prev.current.x, normalizedX),
-    y: smooth(prev.current.y, normalizedY),
-    scale: smooth(prev.current.scale, depthScale),
-    angle: smooth(prev.current.angle, angleRad),
-  };
-
-  prev.current = smoothed;
-
-  useFrame(() => {
-    if (!meshRef.current) return;
-
-    const geometry =
-      meshRef.current.geometry as THREE.PlaneGeometry;
-
-    const pos =
-      geometry.attributes.position;
-
-    for (let i = 0; i < pos.count; i++) {
-      const z =
-        Math.sin(i * 0.3) * 0.02;
-      pos.setZ(i, z);
-    }
-
-    pos.needsUpdate = true;
-  });
+  }, [pose]);
 
   return (
-    <mesh
-      ref={meshRef}
-      position={[
-        smoothed.x,
-        smoothed.y,
-        zOffset,
-      ]}
-      rotation={[0, 0, -smoothed.angle]}
-      scale={[
-        smoothed.scale,
-        smoothed.scale * (torsoHeight / shoulderWidth),
-        1,
-      ]}
-    >
-      <planeGeometry args={[1, 1.6, 25, 25]} />
-
-      <meshPhongMaterial
-        map={texture}
-        transparent
-        shininess={30}
-        side={THREE.DoubleSide}
-      />
+    <mesh ref={meshRef}>
+      {/* 👕 Shirt Shape */}
+      <boxGeometry args={[2, 2.5, 0.4]} />
+      <meshStandardMaterial color="#2563eb" />
     </mesh>
   );
-};
+}
 
-const ARScene: React.FC<SceneProps> = ({
+const ARScene: React.FC<Props> = ({
   pose,
-  textureUrl,
   videoWidth,
   videoHeight,
 }) => {
+  if (!pose) return null;
+
   return (
     <Canvas
       style={{
@@ -162,19 +92,10 @@ const ARScene: React.FC<SceneProps> = ({
         pointerEvents: "none",
       }}
     >
-      <ambientLight intensity={0.7} />
+      <ambientLight intensity={1.2} />
+      <directionalLight position={[0, 0, 5]} />
 
-      <directionalLight
-        position={[0, 0, 5]}
-        intensity={1}
-      />
-
-      <ShirtMesh
-        pose={pose}
-        textureUrl={textureUrl}
-        videoWidth={videoWidth}
-        videoHeight={videoHeight}
-      />
+      <GarmentMesh pose={pose} />
     </Canvas>
   );
 };

@@ -1,71 +1,46 @@
-import React, { useRef, useState } from "react";
-import CameraFeed from "./components/CameraFeed";
-import ARScene from "./components/ARScene";
-import GarmentsList from "./components/GarmentsList";
-import { usePose } from "./hooks/usePose";
-import { useSegmentation } from "./hooks/useSegmentation";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-const VIDEO_WIDTH = 640;
-const VIDEO_HEIGHT = 480;
+// Pages
+import Landing from "./pages/Landing";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 
-const App: React.FC = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const maskCanvasRef = useRef<HTMLCanvasElement>(null);
+import UserEntry from "./pages/UserEntry";
+import SizeAnalysis from "./pages/SizeAnalysis";
+import SizeSelect from "./pages/SizeSelect";
+import VirtualTryOn from "./pages/VirtualTryOn";
 
-  const poseData = usePose(videoRef);
-  useSegmentation(videoRef, maskCanvasRef);
-
-  const [selectedTexture, setSelectedTexture] = useState(
-    "/assets/blue-shirt.png"
-  );
-
+function App() {
   return (
-    <div
-      style={{
-        display: "flex",
-        padding: 20,
-        gap: 40,
-      }}
-    >
-      {/* LEFT SIDE CAMERA + AR */}
-      <div
-        style={{
-          position: "relative",
-          width: VIDEO_WIDTH,
-          height: VIDEO_HEIGHT,
-        }}
-      >
-        {/* Camera */}
-        <CameraFeed videoRef={videoRef} />
+    <Router>
+      <Routes>
 
-        {/* Segmentation Mask Canvas (optional visual layer) */}
-        <canvas
-          ref={maskCanvasRef}
-          width={VIDEO_WIDTH}
-          height={VIDEO_HEIGHT}
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            pointerEvents: "none",
-          }}
+        {/* 🏠 Landing Page */}
+        <Route path="/" element={<Landing />} />
+
+        {/* 👨‍💼 Admin Flow */}
+        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+        {/* 👤 User Flow */}
+        <Route path="/user" element={<UserEntry />} />
+        <Route path="/size-analysis" element={<SizeAnalysis />} />
+        <Route path="/size-select" element={<SizeSelect />} />
+        <Route path="/try-on" element={<VirtualTryOn />} />
+
+        {/* ❌ 404 Fallback */}
+        <Route
+          path="*"
+          element={
+            <div className="min-h-screen flex items-center justify-center">
+              <h2 className="text-2xl font-semibold">404 — Page Not Found</h2>
+            </div>
+          }
         />
 
-        {/* AR Shirt Mesh */}
-        <ARScene
-          pose={poseData}
-          textureUrl={selectedTexture}
-          videoWidth={VIDEO_WIDTH}
-          videoHeight={VIDEO_HEIGHT}
-        />
-      </div>
-
-      {/* RIGHT SIDE GARMENTS */}
-      <div style={{ minWidth: 250 }}>
-        <GarmentsList onSelect={setSelectedTexture} />
-      </div>
-    </div>
+      </Routes>
+    </Router>
   );
-};
+}
 
 export default App;

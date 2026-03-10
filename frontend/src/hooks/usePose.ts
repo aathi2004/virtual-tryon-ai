@@ -1,73 +1,49 @@
 import { useEffect, useRef, useState } from "react";
-import { Pose } from "@mediapipe/pose";
-import { Camera } from "@mediapipe/camera_utils";
 
-export interface PoseData {
-  left_shoulder: { x: number; y: number };
-  right_shoulder: { x: number; y: number };
-  left_hip: { x: number; y: number };
-  right_hip: { x: number; y: number };
+interface Point {
+  x: number;
+  y: number;
 }
 
-export const usePose = (
-  videoRef: React.RefObject<HTMLVideoElement>
-) => {
-  const [poseData, setPoseData] = useState<PoseData | null>(null);
-  const poseRef = useRef<Pose | null>(null);
+interface PoseData {
+  left_shoulder: Point;
+  right_shoulder: Point;
+}
+
+const smooth = (prev: number, curr: number, factor = 0.7) =>
+  prev * factor + curr * (1 - factor);
+
+export const usePose = (videoRef: React.RefObject<HTMLVideoElement>) => {
+  const [pose, setPose] = useState<PoseData | null>(null);
+  const lastPose = useRef<PoseData | null>(null);
 
   useEffect(() => {
     if (!videoRef.current) return;
 
-    const pose = new Pose({
-      locateFile: (file) =>
-        `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
-    });
+    const interval = setInterval(() => {
+      // ⚠️ Replace with real MediaPipe pose later
+      const fakePose: PoseData = {
+        left_shoulder: { x: 200 + Math.random() * 5, y: 200 },
+        right_shoulder: { x: 440 + Math.random() * 5, y: 200 },
+      };
 
-    pose.setOptions({
-      modelComplexity: 1,
-      smoothLandmarks: true,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
+      if (lastPose.current) {
+        fakePose.left_shoulder.x = smooth(
+          lastPose.current.left_shoulder.x,
+          fakePose.left_shoulder.x
+        );
+        fakePose.right_shoulder.x = smooth(
+          lastPose.current.right_shoulder.x,
+          fakePose.right_shoulder.x
+        );
+      }
 
-    pose.onResults((results) => {
-      if (!results.poseLandmarks || !videoRef.current) return;
+      lastPose.current = fakePose;
+      setPose(fakePose);
+    }, 33); // ~30 FPS
 
-      const lm = results.poseLandmarks;
-      const width = videoRef.current.videoWidth;
-      const height = videoRef.current.videoHeight;
-
-      setPoseData({
-        left_shoulder: {
-          x: lm[11].x * width,
-          y: lm[11].y * height,
-        },
-        right_shoulder: {
-          x: lm[12].x * width,
-          y: lm[12].y * height,
-        },
-        left_hip: {
-          x: lm[23].x * width,
-          y: lm[23].y * height,
-        },
-        right_hip: {
-          x: lm[24].x * width,
-          y: lm[24].y * height,
-        },
-      });
-    });
-
-    const camera = new Camera(videoRef.current, {
-      onFrame: async () => {
-        await pose.send({ image: videoRef.current! });
-      },
-      width: 640,
-      height: 480,
-    });
-
-    camera.start();
-    poseRef.current = pose;
+    return () => clearInterval(interval);
   }, [videoRef]);
 
-  return poseData;
+  return pose;
 };
