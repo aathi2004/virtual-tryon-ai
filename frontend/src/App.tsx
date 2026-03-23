@@ -1,44 +1,44 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-// Pages
 import Landing from "./pages/Landing";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 
-import UserEntry from "./pages/UserEntry";
+import GenderSelect from "./pages/GenderSelect";
 import SizeAnalysis from "./pages/SizeAnalysis";
 import SizeSelect from "./pages/SizeSelect";
+
 import VirtualTryOn from "./pages/VirtualTryOn";
 
 function App() {
   return (
     <Router>
+
       <Routes>
 
-        {/* 🏠 Landing Page */}
+        {/* Landing */}
         <Route path="/" element={<Landing />} />
 
-        {/* 👨‍💼 Admin Flow */}
+        {/* Admin */}
         <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
-        {/* 👤 User Flow */}
-        <Route path="/user" element={<UserEntry />} />
+        {/* User Flow */}
+        <Route path="/user" element={<GenderSelect />} />
         <Route path="/size-analysis" element={<SizeAnalysis />} />
         <Route path="/size-select" element={<SizeSelect />} />
+
+        {/* Try On */}
         <Route path="/try-on" element={<VirtualTryOn />} />
 
-        {/* ❌ 404 Fallback */}
+        {/* Fallback */}
         <Route
           path="*"
-          element={
-            <div className="min-h-screen flex items-center justify-center">
-              <h2 className="text-2xl font-semibold">404 — Page Not Found</h2>
-            </div>
-          }
+          element={<div style={{ padding: 40 }}>404 Page Not Found</div>}
         />
 
       </Routes>
+
     </Router>
   );
 }

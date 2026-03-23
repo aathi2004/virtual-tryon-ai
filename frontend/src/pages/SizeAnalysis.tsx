@@ -1,97 +1,198 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 
-type Size = "S" | "M" | "L" | "XL" | "XXL" | "XXXL";
+type Garment = {
+  _id: number;
+  name: string;
+  image: string;
+};
 
-interface Props {
-  height?: number;      // cm
-  shoulder?: number;    // cm
-}
+const SizeAnalysis = () => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
-/* =========================
-   🧠 AI SIZE ESTIMATION
-========================= */
-export function estimateSize(height: number, shoulder: number): Size {
-  const score = height * 0.7 + shoulder * 0.3;
+  const [size, setSize] = useState<string>("Calculating...");
+  const [selectedSize, setSelectedSize] = useState<string>("XL");
 
-  if (score < 150) return "S";
-  if (score < 160) return "M";
-  if (score < 170) return "L";
-  if (score < 180) return "XL";
-  if (score < 190) return "XXL";
-  return "XXXL";
-}
+  const [garments, setGarments] = useState<Garment[]>([]);
+  const [selectedGarment, setSelectedGarment] = useState<string | null>(null);
 
-/* =========================
-   📄 PAGE COMPONENT
-========================= */
-export default function SizeAnalysis({ height = 172, shoulder = 44 }: Props) {
-  const navigate = useNavigate();
-
-  const [recommendedSize, setRecommendedSize] = useState<Size>("M");
-  const [selectedSize, setSelectedSize] = useState<Size>("M");
-
+  // 🎥 CAMERA
   useEffect(() => {
-    const size = estimateSize(height, shoulder);
-    setRecommendedSize(size);
-    setSelectedSize(size);
-  }, [height, shoulder]);
+    navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    });
+  }, []);
 
-  const sizes: Size[] = ["S", "M", "L", "XL", "XXL", "XXXL"];
+  // 👕 FETCH GARMENTS
+  useEffect(() => {
+    fetch("http://localhost:8000/api/garments")
+      .then((res) => res.json())
+      .then((data: Garment[]) => {
+        setGarments(data);
+      })
+      .catch(() => {
+        setGarments([
+          { _id: 1, name: "Black Jacket", image: "black-jacket.png" },
+          { _id: 2, name: "Blue Shirt", image: "blue-shirt.png" },
+          { _id: 3, name: "Green Shirt", image: "green-shirt.png" },
+        ]);
+      });
+  }, []);
+
+  // 🧠 SIZE AUTO
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSize("XXXL");
+      setSelectedSize("XXXL");
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const sizes = ["S", "M", "L", "XL", "XXL", "XXXL", "XXXXL"];
+  // cSpell:ignore XXXL XXXXL
+
+  // 🔥 SCALE MAP
+  const getScale = () => {
+    const map: Record<string, number> = {
+      S: 0.5,
+      M: 0.6,
+      L: 0.7,
+      XL: 0.8,
+      XXL: 0.9,
+      XXXL: 1.0,
+      XXXXL: 1.1,
+    };
+
+    return map[selectedSize] || 0.8;
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600">
-      
-      <div className="bg-white rounded-3xl shadow-2xl p-10 w-[480px]">
-        
-        <h2 className="text-3xl font-bold text-gray-800 text-center mb-2">
-          Body Size Analysis
-        </h2>
+    <div style={{ display: "flex", height: "100vh" }}>
 
-        <p className="text-gray-600 text-center mb-8">
-          AI Recommended Size Based on Body Proportions
-        </p>
+      {/* 🔥 LEFT - CAMERA */}
+      <div
+        style={{
+          flex: 1,
+          position: "sticky",
+          top: 0,
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          background: "#f5f5f5",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <h2>AI Size Analysis</h2>
 
-        {/* 🔹 Recommended Size */}
-        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-center mb-8">
-          <p className="text-gray-600">Recommended Size</p>
-          <p className="text-4xl font-bold text-indigo-700 mt-2">
-            {recommendedSize}
-          </p>
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <video
+              ref={videoRef}
+              autoPlay
+              style={{
+                width: "720px",
+                borderRadius: "15px",
+                transform: "scaleX(-1)",
+              }}
+            />
+
+            {/* 🔥 GARMENT OVERLAY */}
+            {selectedGarment && (
+              <img
+                src={`http://localhost:8000/uploads/${selectedGarment}`}
+                alt="garment"
+                style={{
+                  position: "absolute",
+                  top: "68%",
+                  left: "50%",
+                  transform: `translate(-50%, -50%) scale(${getScale()})`,
+                  width: "50%",
+                  maxWidth: "380px",
+                  mixBlendMode: "multiply", // 🔥 background remove effect
+                  filter: "drop-shadow(0px 5px 10px rgba(0,0,0,0.3))",
+                  pointerEvents: "none",
+                }}
+              />
+            )}
+          </div>
+
+          {/* 🔥 SIZE PANEL */}
+          <div
+            style={{
+              marginTop: 20,
+              padding: 15,
+              background: "#fff",
+              borderRadius: 10,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              display: "inline-block",
+            }}
+          >
+            <p><b>Recommended Size</b></p>
+            <p style={{ color: "blue", fontSize: 18 }}>{size}</p>
+
+            <p>Choose Size</p>
+
+            {sizes.map((s) => (
+              <button
+                key={s}
+                onClick={() => setSelectedSize(s)}
+                style={{
+                  margin: 5,
+                  padding: "8px 12px",
+                  background: selectedSize === s ? "#007bff" : "#ddd",
+                  color: selectedSize === s ? "#fff" : "#000",
+                  border: "none",
+                  borderRadius: 5,
+                  cursor: "pointer",
+                }}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
+      </div>
 
-        {/* 🔹 Manual Size Selection */}
-        <p className="text-gray-700 font-semibold mb-3 text-center">
-          Choose Your Size
-        </p>
+      {/* 🔥 RIGHT - GARMENTS SCROLL */}
+      <div
+        style={{
+          width: "260px",
+          height: "100vh",
+          overflowY: "auto",
+          borderLeft: "1px solid #ddd",
+          padding: 10,
+          background: "#fff",
+        }}
+      >
+        <h3>Garments</h3>
 
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          {sizes.map((size) => (
-            <button
-              key={size}
-              onClick={() => setSelectedSize(size)}
-              className={`py-2 rounded-lg font-semibold border transition
-                ${
-                  selectedSize === size
-                    ? "bg-indigo-600 text-white border-indigo-600"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-                }
-              `}
-            >
-              {size}
-            </button>
-          ))}
-        </div>
-
-        {/* 🔹 Continue Button */}
-        <button
-          onClick={() => navigate("/try-on")}
-          className="w-full py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-lg transition"
-        >
-          Continue to Virtual Try-On
-        </button>
-
+        {garments.map((g) => (
+          <div
+            key={g._id}
+            onClick={() => setSelectedGarment(g.image)}
+            style={{
+              border: "1px solid #ddd",
+              padding: 10,
+              marginBottom: 12,
+              cursor: "pointer",
+              textAlign: "center",
+              borderRadius: 10,
+              transition: "0.2s",
+            }}
+          >
+            <img
+              src={`http://localhost:8000/uploads/${g.image}`}
+              alt={g.name}
+              style={{ width: "100%" }}
+            />
+            <p>{g.name}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
-}
+};
+
+export default SizeAnalysis;

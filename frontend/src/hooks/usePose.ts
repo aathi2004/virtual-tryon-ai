@@ -1,49 +1,41 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
+import { Pose } from "@mediapipe/pose";
+import { Camera } from "@mediapipe/camera_utils";
 
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface PoseData {
-  left_shoulder: Point;
-  right_shoulder: Point;
-}
-
-const smooth = (prev: number, curr: number, factor = 0.7) =>
-  prev * factor + curr * (1 - factor);
-
-export const usePose = (videoRef: React.RefObject<HTMLVideoElement>) => {
-  const [pose, setPose] = useState<PoseData | null>(null);
-  const lastPose = useRef<PoseData | null>(null);
-
+export default function usePose(
+  videoRef: any,
+  onResults: (landmarks: any[]) => void
+) {
   useEffect(() => {
     if (!videoRef.current) return;
 
-    const interval = setInterval(() => {
-      // ⚠️ Replace with real MediaPipe pose later
-      const fakePose: PoseData = {
-        left_shoulder: { x: 200 + Math.random() * 5, y: 200 },
-        right_shoulder: { x: 440 + Math.random() * 5, y: 200 },
-      };
+    const pose = new Pose({
+      locateFile: (file) =>
+        `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
+    });
 
-      if (lastPose.current) {
-        fakePose.left_shoulder.x = smooth(
-          lastPose.current.left_shoulder.x,
-          fakePose.left_shoulder.x
-        );
-        fakePose.right_shoulder.x = smooth(
-          lastPose.current.right_shoulder.x,
-          fakePose.right_shoulder.x
-        );
+    pose.setOptions({
+      modelComplexity: 1,
+      smoothLandmarks: true,
+      enableSegmentation: false,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
+    });
+
+    pose.onResults((results) => {
+      if (results.poseLandmarks) {
+        onResults(results.poseLandmarks);
       }
+    });
 
-      lastPose.current = fakePose;
-      setPose(fakePose);
-    }, 33); // ~30 FPS
+    const camera = new Camera(videoRef.current, {
+      onFrame: async () => {
+        await pose.send({ image: videoRef.current });
+      },
+      width: 640,
+      height: 480,
+    });
 
-    return () => clearInterval(interval);
-  }, [videoRef]);
-
-  return pose;
-};
+    camera.start();
+  }, []);
+}

@@ -1,10 +1,15 @@
 import mongoose from "mongoose";
 
-const garmentSchema = new mongoose.Schema({
+const GarmentSchema = new mongoose.Schema({
+
   name: String,
+
   category: String,
+
   gender: String,
-  image: String,
+
+  image: String
+
 });
 
-export default mongoose.model("Garment", garmentSchema);
+export default mongoose.model("Garment", GarmentSchema);
