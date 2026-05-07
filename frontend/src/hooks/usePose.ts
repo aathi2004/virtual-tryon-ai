@@ -1,6 +1,4 @@
 import { useEffect } from "react";
-import { Pose } from "@mediapipe/pose";
-import { Camera } from "@mediapipe/camera_utils";
 
 export default function usePose(
   videoRef: any,
@@ -8,9 +6,13 @@ export default function usePose(
 ) {
   useEffect(() => {
     if (!videoRef.current) return;
+    if (!(window as any).Pose || !(window as any).Camera) {
+      console.error("MediaPipe globals missing — CDN scripts failed to load");
+      return;
+    }
 
-    const pose = new Pose({
-      locateFile: (file) =>
+    const pose = new (window as any).Pose({
+      locateFile: (file: string) =>
         `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
     });
 
@@ -22,13 +24,13 @@ export default function usePose(
       minTrackingConfidence: 0.5,
     });
 
-    pose.onResults((results) => {
+    pose.onResults((results: any) => {
       if (results.poseLandmarks) {
         onResults(results.poseLandmarks);
       }
     });
 
-    const camera = new Camera(videoRef.current, {
+    const camera = new (window as any).Camera(videoRef.current, {
       onFrame: async () => {
         await pose.send({ image: videoRef.current });
       },

@@ -1,5 +1,8 @@
 import { useState } from "react";
 
+const BACKEND =
+  import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000";
+
 export default function AdminUpload() {
 
   const [loading, setLoading] = useState(false);
@@ -30,7 +33,7 @@ export default function AdminUpload() {
       setLoading(true);
 
       const res = await fetch(
-        "http://localhost:8000/api/garments/upload",
+        `${BACKEND}/api/garments/upload`,
         {
           method: "POST",
           body: form,

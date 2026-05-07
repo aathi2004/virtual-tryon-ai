@@ -20,28 +20,35 @@ const upload = multer({ storage })
 
 /* ---------- UPLOAD ---------- */
 
-router.post("/", upload.single("image"), async (req, res) => {
+const uploadHandler = async (req, res) => {
 
   try {
 
     const { name, category, gender } = req.body
 
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: "No image uploaded" })
+    }
+
     const garment = new Garment({
       name,
       category,
       gender,
-      image: req.file.filename   // IMPORTANT
+      image: req.file.filename
     })
 
     await garment.save()
 
-    res.json({ message: "Uploaded", garment })
+    res.json({ success: true, message: "Uploaded", garment })
 
   } catch (err) {
-    res.status(500).json({ error: err.message })
+    res.status(500).json({ success: false, error: err.message })
   }
 
-})
+}
+
+router.post("/", upload.single("image"), uploadHandler)
+router.post("/upload", upload.single("image"), uploadHandler)
 
 /* ---------- GET ALL ---------- */
 

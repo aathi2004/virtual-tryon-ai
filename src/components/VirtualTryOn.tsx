@@ -50,7 +50,7 @@ const VirtualTryOn: React.FC = () => {
           // Draw the Virtual Garment
           canvasCtx.drawImage(
             garmentImg.current,
-            -transform.width / 2, // Center horizontally
+            -transform.width / 4, // Center horizontally
             -transform.height / 5, // Offset vertically to sit on shoulders
             transform.width,
             transform.height

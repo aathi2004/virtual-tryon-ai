@@ -1,4 +1,20 @@
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="description" content="VirtualFit Pro — AI-powered virtual try-on. Detect your size with computer vision and preview garments in real time." />
+    <meta property="og:title" content="VirtualFit Pro" />
+    <meta property="og:description" content="AI-powered virtual try-on with real-time pose detection and size analysis." />
+    <meta property="og:type" content="website" />
+    <title>VirtualFit Pro — AI Virtual Try-On</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

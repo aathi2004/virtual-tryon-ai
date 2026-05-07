@@ -1,7 +1,9 @@
 import axios from "axios";
 
-export const AI_API = "http://localhost:8000";
-export const BACKEND_API = "http://localhost:5000";
+export const BACKEND_API =
+  import.meta.env.VITE_BACKEND_URL ?? "https://virtualfitpro.onrender.com";
+export const AI_API =
+  import.meta.env.VITE_AI_API ?? BACKEND_API;
 
 export const detectPose = async (image: string) => {
   const res = await axios.post(`${AI_API}/pose`, { image });

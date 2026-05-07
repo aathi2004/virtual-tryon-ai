@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { SelfieSegmentation } from "@mediapipe/selfie_segmentation";
 
 export function useSegmentation(
   videoRef: React.RefObject<HTMLVideoElement>,
@@ -8,9 +7,13 @@ export function useSegmentation(
   useEffect(() => {
 
     if (!videoRef.current || !maskCanvasRef.current) return;
+    if (!(window as any).SelfieSegmentation) {
+      console.error("MediaPipe SelfieSegmentation missing — CDN script failed to load");
+      return;
+    }
 
-    const segmentation = new SelfieSegmentation({
-      locateFile: (file) =>
+    const segmentation = new (window as any).SelfieSegmentation({
+      locateFile: (file: string) =>
         `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
     });
 
@@ -18,7 +21,7 @@ export function useSegmentation(
       modelSelection: 1
     });
 
-    segmentation.onResults((results) => {
+    segmentation.onResults((results: any) => {
 
       const canvas = maskCanvasRef.current!;
       const ctx = canvas.getContext("2d")!;

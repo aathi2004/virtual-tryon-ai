@@ -5,3 +5,9 @@ build
 venv
 __pycache__
 uploads
+
+# Auto-downloaded MediaPipe models (regenerated on first run of main.py)
+models/
+
+# Claude Code local state
+.claude/
